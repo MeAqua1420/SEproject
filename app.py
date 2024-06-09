@@ -24,6 +24,15 @@ class User(db.Model):
     phone = db.Column(db.String(15), nullable=False)
 
 
+class Algorithm(db.Model):
+    __tablename__ = 'algorithms'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    time_complexity = db.Column(db.String(255), nullable=False)
+    uploader = db.Column(db.String(255), nullable=False)
+    storage_location = db.Column(db.Text, nullable=False)
+    upload_date = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)
+
 @app.route('/register', methods=['POST'])
 def register_user():
     try:
@@ -32,18 +41,20 @@ def register_user():
         phone = request.form['phone']
         logging.info(f"Received registration data: username={username}, phone={phone}")
         new_user = User(username=username, password=password, phone=phone)
+        heap_sort = Algorithm(name='monkey Sort', time_complexity='O(n!)', uploader='fuck', storage_location='/Users/qiurui/PycharmProjects/SEdemo/test.txt')
         db.session.add(new_user)
+        db.session.add(heap_sort)
         db.session.commit()
         logging.info(f"User {username} registered successfully.")
 
-        return render_template('http://localhost:63343/index.html', message="注册成功")
+        return render_template('error5.html', message="注册成功")
     except IntegrityError as e:
         db.session.rollback()
         logging.error(f"IntegrityError: {e}")
-        return render_template('register.html', message="用户名已存在，请重新注册")
+        return render_template('error2.html', message="用户名已存在，请重新注册")
     except Exception as e:
         logging.error(f"Error: {e}")
-        return render_template('register.html', message="注册失败，请重试")
+        return render_template('error.html', message="注册失败，请重试")
 
 
 @app.route('/login', methods=['POST'])
@@ -64,10 +75,10 @@ def login_user():
         else:
             logging.warning(f"Invalid credentials for user {username}.")
 
-            return render_template('demo.html', message="登录成功");
+            return render_template('error.html', message="登录失败");
     except Exception as e:
         logging.error(f"Error: {e}")
-        return render_template('demo.html', message="登录失败，请重试")
+        return render_template('error.html', message="登录失败，请重试")
 
 
 @app.route('/reset_password', methods=['POST'])
@@ -83,20 +94,20 @@ def reset_password():
 
         if new_password != confirm_new_password:
             logging.warning("Passwords do not match.")
-            return render_template('newpassword.html', message="两次输入的密码不一致，请重新输入")
+            return render_template('error1.html', message="两次输入的密码不一致，请重新输入")
 
         user = User.query.filter_by(username=username, phone=phone).first()
         if user:
             user.password = new_password
             db.session.commit()
             logging.info(f"Password for user {username} reset successfully.")
-            return render_template('newpage.html', message="密码重置成功")
+            return render_template('error4.html', message="密码重置成功")
         else:
             logging.warning(f"User {username} not found or invalid phone number.")
-            return render_template('newpassword.html', message="用户未找到或手机号不正确")
+            return render_template('error3.html', message="用户未找到或手机号不正确")
     except Exception as e:
         logging.error(f"Error: {e}")
-        return render_template('newpassword.html', message="密码重置失败，请重试")
+        return render_template('error.html', message="密码重置失败，请重试")
 
 
 if __name__ == '__main__':

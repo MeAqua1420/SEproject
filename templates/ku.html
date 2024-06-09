@@ -1,12 +1,90 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>newpage</title>
+<meta charset="UTF-8">
+<title>欢迎来到算法库</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+    }
+    .sidebar {
+        width: 200px;
+        background-color: #2d3e50;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: start;
+        align-items: start;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    .sidebar a {
+        color: white;
+        text-decoration: none;
+        padding: 10px 0;
+        width: 100%;
+        display: block;
+    }
+    .sidebar a:hover {
+        background-color: #3b4a60;
+    }
+    .container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #003366;
+        color: white;
+        gap: 20px;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    .chart-container {
+        width: 300px;
+        height: 300px;
+    }
+</style>
 </head>
 <body>
-<h1>
-  welcome to 算法库
-</h1>
+<nav class="sidebar">
+    <a href="#overview">算法库概览</a>
+    <a href="#search">算法库搜索</a>
+    <a href="#upload">上传算法</a>
+    <a href="#manage">算法库管理</a>
+</nav>
+<div class="container">
+    <div>算法种类概览</div>
+    <div class="chart-container">
+        <canvas id="myChart"></canvas>
+    </div>
+    <div></div>
+</div>
+<script>
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['搜索', '排序', '图', '数学', 'AI'],
+            datasets: [{
+                label: '领域分布',
+                data: [17, 13, 15, 10, 5],
+                backgroundColor: [
+                    'green',
+                    'blue',
+                    'lightblue',
+                    'lime',
+                    'lightgreen'
+                ],
+                hoverOffset: 4
+            }]
+        }
+    });
+</script>
 </body>
 </html>
