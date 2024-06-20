@@ -32,6 +32,9 @@ class Algorithm(db.Model):
     uploader = db.Column(db.String(255), nullable=False)
     storage_location = db.Column(db.Text, nullable=False)
     upload_date = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)
+    type = db.Column(db.String(255),nullable = False)
+
+
 
 @app.route('/register', methods=['POST'])
 def register_user():
@@ -41,9 +44,7 @@ def register_user():
         phone = request.form['phone']
         logging.info(f"Received registration data: username={username}, phone={phone}")
         new_user = User(username=username, password=password, phone=phone)
-        heap_sort = Algorithm(name='monkey Sort', time_complexity='O(n!)', uploader='fuck', storage_location='/Users/qiurui/PycharmProjects/SEdemo/test.txt')
         db.session.add(new_user)
-        db.session.add(heap_sort)
         db.session.commit()
         logging.info(f"User {username} registered successfully.")
 
@@ -70,17 +71,37 @@ def login_user():
         if user:
             print("gooduser")
             logging.info(f"User {username} logged in successfully.")
-
-            return render_template('ku.html', message="登录成功");
+            sort_count = Algorithm.query.filter_by(type='SORT').count()
+            search_count = Algorithm.query.filter_by(type='Search').count()
+            math_count = Algorithm.query.filter_by(type='Math').count()
+            graph_count = Algorithm.query.filter_by(type='Graph').count()
+            return render_template('ku.html', message="登录成功",data1 = [sort_count,search_count,math_count,graph_count])
         else:
             logging.warning(f"Invalid credentials for user {username}.")
 
-            return render_template('error.html', message="登录失败");
+            return render_template('error.html', message="登录失败")
     except Exception as e:
         logging.error(f"Error: {e}")
         return render_template('error.html', message="登录失败，请重试")
 
 
+@app.route('/overview', methods=['GET'])
+def overview():
+    sort_count = Algorithm.query.filter_by(type='SORT').count()
+    search_count = Algorithm.query.filter_by(type='Search').count()
+    math_count = Algorithm.query.filter_by(type='Math').count()
+    graph_count = Algorithm.query.filter_by(type='Graph').count()
+
+    return render_template("overview.html",data1 = [sort_count, search_count, math_count, graph_count])
+
+@app.route('/search', methods=['GET'])
+def search():
+    sort_count = Algorithm.query.filter_by(type='SORT').count()
+    search_count = Algorithm.query.filter_by(type='Search').count()
+    math_count = Algorithm.query.filter_by(type='Math').count()
+    graph_count = Algorithm.query.filter_by(type='Graph').count()
+
+    return render_template("Search.html",data1 = [sort_count, search_count, math_count, graph_count])
 @app.route('/reset_password', methods=['POST'])
 def reset_password():
     try:
