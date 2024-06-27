@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithm Search</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #2d3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: start;
+            align-items: start;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .sidebar a {
+            color: #fefefe;
+            text-decoration: none;
+            padding: 10px 0;
+            width: 100%;
+            display: block;
+        }
+        .sidebar a:hover {
+            background-color: #3b4a60;
+        }
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Align items to the start (left) */
+            justify-content: flex-start; /* Align items to the start (top) */
+            background-color: #fefefe;
+            color: #000000;
+            gap: 20px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <a href="/overview">算法库概览</a>
+        <a href="/searchpage">算法库搜索</a>
+        <a href="#upload">上传算法</a>
+        <a href="#manage">算法库管理</a>
+    </nav>
+
+    <div class="container">
+        <h1 class="mt-5">Algorithm Search</h1>
+        <form id="search-form" class="mt-4">
+            <div class="form-group">
+                <label for="search-query">Search Query:</label>
+                <input type="text" id="search-query" class="form-control" placeholder="Enter algorithm name or type" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+        <div id="search-results" class="mt-4">
+            <!-- Search results will be displayed here -->
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#search-form').on('submit', function(event) {
+                event.preventDefault();
+                var query = $('#search-query').val();
+
+                $.ajax({
+                    url: '/search',
+                    method: 'GET',
+                    data: { query: query },
+                    success: function(data) {
+                        var resultsContainer = $('#search-results');
+                        resultsContainer.empty();
+
+                        if (data.length > 0) {
+                            var resultsList = $('<ul class="list-group"></ul>');
+                            data.forEach(function(item) {
+                                var listItem = $('<li class="list-group-item"></li>')
+
+                                    .html('<a href="/algorithm?name=">' + item.name + ' - ' + item.type + '</a>');
+                                resultsList.append(listItem);
+                            });
+                            resultsContainer.append(resultsList);
+                        } else {
+                            resultsContainer.append('<p>No results found.</p>');
+                        }
+                    },
+                    error: function(error) {
+                        $('#search-results').empty().append('<p>An error occurred. Please try again.</p>');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
