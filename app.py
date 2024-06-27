@@ -43,6 +43,12 @@ class Algorithm(db.Model):
     upload_date = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)
     type = db.Column(db.String(255),nullable = False)
 
+class Repositories(db.Model):
+    __tablename__ = 'repositories'
+    id = db.Column(db.Integer, primary_key=True)
+    alid = db.Column(db.Integer)
+    ownerid = db.Column(db.Integer)
+
 class DBaction:
     def AddUser(self):
         username = request.form['username']
@@ -228,6 +234,20 @@ def upload_algorithm():
             flash('All fields are required!', 'danger')
 
     return render_template('upload.html')
+
+@app.route('/my_repository', methods=['GET'])
+def my_repository():
+    if 'username' not in session:
+        flash('You must be logged in to view your repository.', 'danger')
+        return redirect(url_for('login'))
+
+    user = User.query.filter_by(username=session['username']).first()
+    if user:
+        repositories = db.session.query(Repositories, Algorithm).join(Algorithm, Repositories.alid == Algorithm.id).filter(Repositories.ownerid == user.id).all()
+        return render_template('my_repository.html', repositories=repositories)
+    else:
+        flash('User not found!', 'danger')
+        return redirect(url_for('login'))
 
 
 if __name__ == '__main__':
