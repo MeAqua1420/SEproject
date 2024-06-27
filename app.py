@@ -1,16 +1,25 @@
-from flask import Flask, request, jsonify, render_template
+import urllib
+import os
+from _curses import flash
+
+from flask import Flask, request, jsonify, render_template,send_file,redirect, url_for, flash,g, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 from flask_cors import CORS
 import logging
 import webbrowser
+from datetime import datetime
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://qiurui:qiurui5312@localhost/algorithmdb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = '/Users/qiurui/PycharmProjects/SEdemo'
+app.secret_key = 'supersecretkey'
 
 db = SQLAlchemy(app)
+
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -60,16 +69,19 @@ def register_user():
         logging.error(f"Error: {e}")
         return render_template('error.html', message="注册失败，请重试")
 
-
+@app.before_request
+def before_request():
+    g.username = session.get('username')
 @app.route('/login', methods=['POST'])
 def login_user():
     try:
         username = request.form['username']
         password = request.form['password']
-        logging.info(f"Received login data: username={username}")
+        logging.info(f"Received login data: username={g.username}")
         user = User.query.filter_by(username=username, password=password).first()
         if user:
             print("gooduser")
+            session['username'] = username
             logging.info(f"User {username} logged in successfully.")
             sort_count = Algorithm.query.filter_by(type='SORT').count()
             search_count = Algorithm.query.filter_by(type='Search').count()
@@ -107,25 +119,44 @@ def search():
 def searchpage():
     return render_template("hello.html")
 
-@app.route('/algorithm', methods=['GET'])
-def get_algorithm():
+@app.route('/algorithm/<name>', methods=['GET'])
+def get_algorithm(name):
     print("hello")
-    name = request.args.get('name')
-    print(name)
-    # algorithm = Algorithm.query.get(id)
-    # print(id)
-    # if algorithm:
-    #     return jsonify({
-    #         'name': algorithm.name,
-    #         'type': algorithm.type,
-    #         'time_complexity': algorithm.time_complexity,
-    #         'uploader': algorithm.uploader,
-    #         'storage_location': algorithm.storage_location,
-    #         'upload_date': algorithm.upload_date.strftime('%Y-%m-%d %H:%M:%S')
-    #     })
-    # else:
-    #     return jsonify({'error': 'Algorithm not found'}), 404
+    decoded_name = urllib.parse.unquote(name)
+    print(decoded_name)
+    algorithm = Algorithm.query.filter_by(name = name).first()
+    print(algorithm)
+    print(algorithm.type)
+    file_content = ""
+    try:
+        with open(algorithm.storage_location, 'r') as file:
+            file_content = file.read()
+    except Exception as e:
+        file_content = f"Error reading file: {e}"
+    #print(file_content)
+    if algorithm:
+        return render_template("algorithm.html",
+            name= algorithm.name,
+            type= algorithm.type,
+            time_complexity= algorithm.time_complexity,
+            uploader=algorithm.uploader,
+            storage_location=algorithm.storage_location,
+            upload_date=algorithm.upload_date.strftime('%Y-%m-%d %H:%M:%S'),
+            file_content = file_content
+        )
+    else:
+        return jsonify({'error': 'Algorithm not found'}), 404
     return jsonify({'error': 'Algorithm not found'}), 404
+
+
+@app.route('/download/<name>', methods=['GET'])
+def download_algorithm(name):
+    decoded_name = urllib.parse.unquote(name)
+    algorithm = Algorithm.query.filter_by(name=decoded_name).first()
+    if algorithm:
+        return send_file(algorithm.storage_location, as_attachment=True, download_name=f"{algorithm.name}.py")
+    else:
+        return jsonify({'error': 'Algorithm not found'}), 404
 @app.route('/reset_password', methods=['POST'])
 def reset_password():
     try:
@@ -153,6 +184,50 @@ def reset_password():
     except Exception as e:
         logging.error(f"Error: {e}")
         return render_template('error.html', message="密码重置失败，请重试")
+
+@app.route('/uploadpage', methods=['GET', 'POST'])
+def uploadpage():
+    print(g.username)
+    return render_template('upload.html')
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_algorithm():
+    if 'username' not in session:
+        flash('You must be logged in to upload an algorithm.', 'danger')
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        name = request.form['name']
+        time_complexity = request.form['time_complexity']
+        alg_type = request.form['type']
+        file = request.files['file']
+
+        if file and name and time_complexity and alg_type:
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+
+            new_algorithm = Algorithm(
+                name=name,
+                time_complexity=time_complexity,
+                type=alg_type,
+                uploader=g.username,  # 使用全局变量中的用户名
+                storage_location=file_path,
+                upload_date=datetime.now()
+            )
+
+            try:
+                db.session.add(new_algorithm)
+                db.session.commit()
+                flash('Algorithm uploaded successfully!', 'success')
+                return redirect(url_for('upload_algorithm'))
+            except IntegrityError as e:
+                db.session.rollback()
+                flash('Error uploading algorithm: {}'.format(e), 'danger')
+        else:
+            flash('All fields are required!', 'danger')
+
+    return render_template('upload.html')
 
 
 if __name__ == '__main__':

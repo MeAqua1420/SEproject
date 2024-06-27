@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Algorithm Details</title>
+    <title>Upload Algorithm</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -49,16 +47,6 @@
             box-sizing: border-box;
             overflow-y: auto;
         }
-        .file-content {
-            white-space: pre-wrap;
-            background-color: #f8f9fa;
-            padding: 15px;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            width: 100%;
-            overflow-y: auto;
-            max-height: 400px;
-        }
     </style>
 </head>
 <body>
@@ -70,20 +58,26 @@
     </nav>
 
     <div class="container">
-        <h1 class="mt-5">Algorithm Details</h1>
-        <div id="algorithm-details" class="mt-4">
-            <h2>{{ name }}</h2>
-            <p><strong>Type:</strong> {{ type }}</p>
-            <p><strong>Time Complexity:</strong> {{ time_complexity }}</p>
-            <p><strong>Uploader:</strong> {{ uploader }}</p>
-            <p><strong>Storage Location:</strong> {{ storage_location }}</p>
-            <p><strong>Upload Date:</strong> {{ upload_date }}</p>
-            <div class="file-content">
-                <h3>File Content:</h3>
-                <pre>{{ file_content }}</pre>
+        <h1 class="mt-5">Upload Algorithm</h1>
+        <form action="/upload" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="name">Algorithm Name:</label>
+                <input type="text" id="name" name="name" class="form-control" required>
             </div>
-            <a href="/download/{{ name }}" class="btn btn-primary mt-3">Download {{ name }}.py</a>
-        </div>
+            <div class="form-group">
+                <label for="time_complexity">Time Complexity:</label>
+                <input type="text" id="time_complexity" name="time_complexity" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="type">Type:</label>
+                <input type="text" id="type" name="type" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="file">Upload File:</label>
+                <input type="file" id="file" name="file" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
     </div>
 </body>
 </html>
