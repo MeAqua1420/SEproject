@@ -85,6 +85,9 @@ def login_user():
         password = request.form['password']
         logging.info(f"Received login data: username={g.username}")
         user = User.query.filter_by(username=username, password=password).first()
+        app.config['UPLOAD_FOLDER'] = app.config['UPLOAD_FOLDER']+"/"+username
+        comd = 'mkdir '+app.config['UPLOAD_FOLDER']
+        os.system(comd)
         if user:
             print("gooduser")
             session['username'] = username
@@ -248,6 +251,35 @@ def my_repository():
     else:
         flash('User not found!', 'danger')
         return redirect(url_for('login'))
+
+@app.route('/add_to_repository', methods=['POST'])
+def add_to_repository():
+    if 'username' not in session:
+        return jsonify({'message': 'You must be logged in to add to your repository.'}), 401
+
+    user_name = session['username']
+    algorithm_name = request.form['name']
+    user = User.query.filter_by(username = user_name).first()
+    algorithm = Algorithm.query.filter_by(name=algorithm_name).first()
+    print(user.id)
+    print(algorithm.id)
+    if not algorithm:
+        return jsonify({'message': 'Algorithm not found.'}), 404
+
+    existing_entry = Repositories.query.filter_by(ownerid=user.id, alid=algorithm.id).first()
+    if existing_entry:
+        return jsonify({'message': 'Algorithm already in your repository.'}), 409
+
+    new_entry = Repositories(ownerid=user.id, alid=algorithm.id)
+    try:
+        db.session.add(new_entry)
+        db.session.commit()
+        return jsonify({'message': 'Algorithm added to your repository successfully!'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Error adding algorithm to repository: {e}'}), 500
+
+
 
 
 if __name__ == '__main__':
